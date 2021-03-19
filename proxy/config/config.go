@@ -151,8 +151,6 @@ func (c *EndpointsConfig) handleAddEndpoints(obj interface{}) {
 	for i := range c.eventHandlers {
 		klog.V(4).Infof("Calling handler.OnEndpointsAdd")
 		c.eventHandlers[i].OnEndpointsAdd(endpoints)
-		tmp1 := c.eventHandlers[i]
-		klog.V(0).Infof("---|| config.go ||----tmp1 := c.eventHandlers[i]", tmp1)
 	}
 }
 

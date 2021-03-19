@@ -52,8 +52,6 @@ var (
 
 // isValidEndpoint checks that the given host / port pair are valid endpoint
 func isValidEndpoint(host string, port int) bool {
-	klog.V(0).Infof("  --> HOW TO GET ==== Host = ", host)
-	klog.V(0).Infof("  --> HOW TO GET ==== Port = ", port)
 	return host != "" && port > 0
 }
 
@@ -61,21 +59,14 @@ func isValidEndpoint(host string, port int) bool {
 // portname. Explode Endpoints.Subsets[*] into this structure.
 func BuildPortsToEndpointsMap(endpoints *v1.Endpoints) map[string][]string {
 	portsToEndpoints := map[string][]string{}
-	//	klog.V(0).Infof("  --> HOW TO GET ==== Enpoint.Subnets = ", endpoints.Subsets)
 	for i := range endpoints.Subsets {
 		ss := &endpoints.Subsets[i]
-		//		klog.V(0).Infof("  --> HOW TO GET ==== ss := &endpoints.Subsets[i] = ", ss)
 		for i := range ss.Ports {
 			port := &ss.Ports[i]
-			//			klog.V(0).Infof("  --> HOW TO GET ==== port = ", port)
 			for i := range ss.Addresses {
 				addr := &ss.Addresses[i]
-				//				klog.V(0).Infof("  --> HOW TO GET ==== addr = ", addr)
 				if isValidEndpoint(addr.IP, int(port.Port)) {
 					portsToEndpoints[port.Name] = append(portsToEndpoints[port.Name], net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
-//					klog.V(0).Infof(" Utils.go --> HOW TO GET ENDPOINT ====addr.IP==: ", addr.IP)
-//					klog.V(0).Infof(" Utils.go --> HOW TO GET ENDPOINT --portsToEndpoints: ", portsToEndpoints)
-					//					klog.V(0).Infof(" Utils.go --> HOW TO GET ENDPOINT --portsToEndpoints[port.Name]: ", portsToEndpoints[port.Name])
 				}
 			}
 		}
