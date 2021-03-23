@@ -67,12 +67,49 @@ func BuildPortsToEndpointsMap(endpoints *v1.Endpoints) map[string][]string {
 				addr := &ss.Addresses[i]
 				if isValidEndpoint(addr.IP, int(port.Port)) {
 					portsToEndpoints[port.Name] = append(portsToEndpoints[port.Name], net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
+					klog.V(0).Infof(" <<< addr.IP >> ", addr.IP)
+					klog.V(0).Infof(" <<< Port to PORT >> ", port.Port)
+					klog.V(0).Infof(" <<< addr.IP >> ", strconv.Itoa(int(port.Port)))
+					klog.V(0).Infof(" <<< Port to PORT >> ", int(port.Port))
+					klog.V(0).Infof(" <<< PORT-NAME >> ",port.Name)
+					klog.V(0).Infof(" <<< Port to ENDPOINT >> ", portsToEndpoints[port.Name])
+					klog.V(0).Infof(" <<< net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))) >>> -->", net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
+					klog.V(0).Infof("\n")
 				}
 			}
 		}
 	}
 	return portsToEndpoints
 }
+
+// BuildPortsToNodeNamesMap builds a map of portname -> all node names for that
+// portname. Explode Endpoints.Subsets[*] into this structure.
+func BuildPortsToNodeNamesMap(endpoints *v1.Endpoints) map[string][]string {
+	portsToNodeNames := map[string][]string{}
+	for i := range endpoints.Subsets {
+		ss := &endpoints.Subsets[i]
+		for i := range ss.Ports {
+			port := &ss.Ports[i]
+			for i := range ss.Addresses {
+				addr := &ss.Addresses[i]
+				if isValidEndpoint(addr.IP, int(port.Port)) {
+					NameOfNode := addr.NodeName
+					if NameOfNode== nil {
+						portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], "")
+						klog.V(0).Infof("<<<Port to NODE NAMES - IF >>> ", portsToNodeNames[port.Name])
+					} else {
+						portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], *NameOfNode)
+						klog.V(0).Infof(" <<<Port to NODE NAMES> - ELSE>> ", portsToNodeNames[port.Name])
+						klog.V(0).Infof(" <<<NameOfNode>>> -->", NameOfNode)
+					}
+					//portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], *addr.NodeName)
+				}
+			}
+		}
+	}
+	return portsToNodeNames
+}
+
 
 // IsZeroCIDR checks whether the input CIDR string is either
 // the IPv4 or IPv6 zero CIDR
