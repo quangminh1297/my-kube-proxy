@@ -67,14 +67,14 @@ func BuildPortsToEndpointsMap(endpoints *v1.Endpoints) map[string][]string {
 				addr := &ss.Addresses[i]
 				if isValidEndpoint(addr.IP, int(port.Port)) {
 					portsToEndpoints[port.Name] = append(portsToEndpoints[port.Name], net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
-					klog.V(0).Infof(" <<< addr.IP >> ", addr.IP)
-					klog.V(0).Infof(" <<< Port to PORT >> ", port.Port)
-					klog.V(0).Infof(" <<< addr.IP >> ", strconv.Itoa(int(port.Port)))
-					klog.V(0).Infof(" <<< Port to PORT >> ", int(port.Port))
-					klog.V(0).Infof(" <<< PORT-NAME >> ",port.Name)
-					klog.V(0).Infof(" <<< Port to ENDPOINT >> ", portsToEndpoints[port.Name])
-					klog.V(0).Infof(" <<< net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))) >>> -->", net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
-					klog.V(0).Infof("\n")
+					//klog.V(0).Infof(" <<< addr.IP >> ", addr.IP)
+					//klog.V(0).Infof(" <<< Port to PORT >> ", port.Port)
+					//klog.V(0).Infof(" <<< addr.IP >> ", strconv.Itoa(int(port.Port)))
+					//klog.V(0).Infof(" <<< Port to PORT >> ", int(port.Port))
+					//klog.V(0).Infof(" <<< PORT-NAME >> ",port.Name)
+					//klog.V(0).Infof(" <<< Port to ENDPOINT >> ", portsToEndpoints[port.Name])
+					//klog.V(0).Infof(" <<< net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))) >>> -->", net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
+					//klog.V(0).Infof("\n")
 				}
 			}
 		}
