@@ -40,7 +40,7 @@ type ProxySocket interface {
 	// while sessions are active.
 	Close() error
 	// ProxyLoop proxies incoming connections for the specified service to the service endpoints.
-	ProxyLoop(service proxy.ServicePortName, info *ServiceInfo, loadBalancer LoadBalancer)
+	ProxyLoop_V2(service proxy.ServicePortName, info *ServiceInfo, loadBalancer LoadBalancer)
 	// ListenPort returns the host port that the ProxySocket is listening on
 	ListenPort() int
 }
@@ -88,20 +88,31 @@ func (tcp *tcpProxySocket) ListenPort() int {
 	return tcp.port
 }
 
+
 // TryConnectEndpoints attempts to connect to the next available endpoint for the given service, cycling
 // through until it is able to successfully connect, or it has tried with all timeouts in EndpointDialTimeouts.
-func TryConnectEndpoints(service proxy.ServicePortName, srcAddr net.Addr, protocol string, loadBalancer LoadBalancer) (out net.Conn, err error) {
+func TryConnectEndpoints_V2(service proxy.ServicePortName, srcAddr net.Addr, protocol string, loadBalancer LoadBalancer) (out net.Conn, err error) {
 	sessionAffinityReset := false
 	for _, dialTimeout := range EndpointDialTimeouts {
-		endpoint, err := loadBalancer.NextEndpoint(service, srcAddr, sessionAffinityReset)
+		endpoint, err := loadBalancer.NextEndpoint_V2(service, srcAddr, sessionAffinityReset)
 		if err != nil {
 			klog.Errorf("Couldn't find an endpoint for %s: %v", service, err)
 			return nil, err
 		}
-		klog.V(3).Infof("Mapped service %q to endpoint %s", service, endpoint)
+
+		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< srcAddr >>> --> ", srcAddr)
+		klog.V(0).Infof("Mapped service %q to endpoint %s", service, endpoint)
+
 		// TODO: This could spin up a new goroutine to make the outbound connection,
 		// and keep accepting inbound traffic.
 		outConn, err := net.DialTimeout(protocol, endpoint, dialTimeout)
+
+
+		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< protocol >>> --> ", protocol)
+		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< endpoint >>> --> ", endpoint)
+		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< dialTimeout >>> --> ", dialTimeout)
+		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< outConn%v, AND outConn%+v>>> --> ", outConn, outConn)
+
 		if err != nil {
 			if isTooManyFDsError(err) {
 				panic("Dial failed: " + err.Error())
@@ -115,7 +126,7 @@ func TryConnectEndpoints(service proxy.ServicePortName, srcAddr net.Addr, protoc
 	return nil, fmt.Errorf("failed to connect to an endpoint.")
 }
 
-func (tcp *tcpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *ServiceInfo, loadBalancer LoadBalancer) {
+func (tcp *tcpProxySocket) ProxyLoop_V2(service proxy.ServicePortName, myInfo *ServiceInfo, loadBalancer LoadBalancer) {
 	for {
 		if !myInfo.IsAlive() {
 			// The service port was closed or replaced.
@@ -123,6 +134,9 @@ func (tcp *tcpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *Serv
 		}
 		// Block until a connection is made.
 		inConn, err := tcp.Accept()
+
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn%v, AND inConn%+v >>> --> ", inConn, inConn)
+
 		if err != nil {
 			if isTooManyFDsError(err) {
 				panic("Accept failed: " + err.Error())
@@ -138,8 +152,16 @@ func (tcp *tcpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *Serv
 			klog.Errorf("Accept failed: %v", err)
 			continue
 		}
-		klog.V(3).Infof("Accepted TCP connection from %v to %v", inConn.RemoteAddr(), inConn.LocalAddr())
-		outConn, err := TryConnectEndpoints(service, inConn.(*net.TCPConn).RemoteAddr(), "tcp", loadBalancer)
+		klog.V(0).Infof("Accepted TCP connection from %v to %v", inConn.RemoteAddr(), inConn.LocalAddr())
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.RemoteAddr() >>> --> ", inConn.RemoteAddr())
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.LocalAddr() >>> --> ", inConn.LocalAddr())
+
+		outConn, err := TryConnectEndpoints_V2(service, inConn.(*net.TCPConn).RemoteAddr(), "tcp", loadBalancer)
+
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< outConn%v, AND outConn%+v >>> --> ", outConn, outConn)
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.(*net.TCPConn).RemoteAddr()%v, AND inConn.(*net.TCPConn).RemoteAddr()%+v >>> --> ", inConn.(*net.TCPConn).RemoteAddr(), inConn.(*net.TCPConn).RemoteAddr())
+		/**/klog.V(0).Infof("CHECK Socket-Loop <<< loadBalancer%v, AND loadBalancer%+v >>> --> ", loadBalancer, loadBalancer)
+
 		if err != nil {
 			klog.Errorf("Failed to connect to balancer: %v", err)
 			inConn.Close()
@@ -149,6 +171,69 @@ func (tcp *tcpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *Serv
 		go ProxyTCP(inConn.(*net.TCPConn), outConn.(*net.TCPConn))
 	}
 }
+
+//
+//// TryConnectEndpoints attempts to connect to the next available endpoint for the given service, cycling
+//// through until it is able to successfully connect, or it has tried with all timeouts in EndpointDialTimeouts.
+//func TryConnectEndpoints(service proxy.ServicePortName, srcAddr net.Addr, protocol string, loadBalancer LoadBalancer) (out net.Conn, err error) {
+//	sessionAffinityReset := false
+//	for _, dialTimeout := range EndpointDialTimeouts {
+//		endpoint, err := loadBalancer.NextEndpoint(service, srcAddr, sessionAffinityReset)
+//		if err != nil {
+//			klog.Errorf("Couldn't find an endpoint for %s: %v", service, err)
+//			return nil, err
+//		}
+//		klog.V(3).Infof("Mapped service %q to endpoint %s", service, endpoint)
+//		// TODO: This could spin up a new goroutine to make the outbound connection,
+//		// and keep accepting inbound traffic.
+//		outConn, err := net.DialTimeout(protocol, endpoint, dialTimeout)
+//		if err != nil {
+//			if isTooManyFDsError(err) {
+//				panic("Dial failed: " + err.Error())
+//			}
+//			klog.Errorf("Dial failed: %v", err)
+//			sessionAffinityReset = true
+//			continue
+//		}
+//		return outConn, nil
+//	}
+//	return nil, fmt.Errorf("failed to connect to an endpoint.")
+//}
+//
+//func (tcp *tcpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *ServiceInfo, loadBalancer LoadBalancer) {
+//	for {
+//		if !myInfo.IsAlive() {
+//			// The service port was closed or replaced.
+//			return
+//		}
+//		// Block until a connection is made.
+//		inConn, err := tcp.Accept()
+//		if err != nil {
+//			if isTooManyFDsError(err) {
+//				panic("Accept failed: " + err.Error())
+//			}
+//
+//			if isClosedError(err) {
+//				return
+//			}
+//			if !myInfo.IsAlive() {
+//				// Then the service port was just closed so the accept failure is to be expected.
+//				return
+//			}
+//			klog.Errorf("Accept failed: %v", err)
+//			continue
+//		}
+//		klog.V(3).Infof("Accepted TCP connection from %v to %v", inConn.RemoteAddr(), inConn.LocalAddr())
+//		outConn, err := TryConnectEndpoints(service, inConn.(*net.TCPConn).RemoteAddr(), "tcp", loadBalancer)
+//		if err != nil {
+//			klog.Errorf("Failed to connect to balancer: %v", err)
+//			inConn.Close()
+//			continue
+//		}
+//		// Spin up an async copy loop.
+//		go ProxyTCP(inConn.(*net.TCPConn), outConn.(*net.TCPConn))
+//	}
+//}
 
 // ProxyTCP proxies data bi-directionally between in and out.
 func ProxyTCP(in, out *net.TCPConn) {
@@ -201,7 +286,7 @@ func newClientCache() *ClientCache {
 	return &ClientCache{Clients: map[string]net.Conn{}}
 }
 
-func (udp *udpProxySocket) ProxyLoop(service proxy.ServicePortName, myInfo *ServiceInfo, loadBalancer LoadBalancer) {
+func (udp *udpProxySocket) ProxyLoop_V2(service proxy.ServicePortName, myInfo *ServiceInfo, loadBalancer LoadBalancer) {
 	var buffer [4096]byte // 4KiB should be enough for most whole-packets
 	for {
 		if !myInfo.IsAlive() {
@@ -255,7 +340,7 @@ func (udp *udpProxySocket) getBackendConn(activeClients *ClientCache, cliAddr ne
 		// and keep accepting inbound traffic.
 		klog.V(3).Infof("New UDP connection from %s", cliAddr)
 		var err error
-		svrConn, err = TryConnectEndpoints(service, cliAddr, "udp", loadBalancer)
+		svrConn, err = TryConnectEndpoints_V2(service, cliAddr, "udp", loadBalancer)
 		if err != nil {
 			return nil, err
 		}

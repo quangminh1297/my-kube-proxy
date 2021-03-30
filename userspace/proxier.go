@@ -215,11 +215,6 @@ func NewCustomProxier(loadBalancer LoadBalancer, listenIP net.IP, iptables iptab
 	proxyPorts := newPortAllocator(pr)
 
 	klog.V(2).Infof("Setting proxy IP to %v and initializing iptables", hostIP)
-	klog.V(0).Infof("---|| Proxier ->NewCustomProxier func() ||----Check argument: hostIP", hostIP)
-	klog.V(0).Infof("---|| Proxier ->NewCustomProxier func() ||----Check argument: iptables", iptables)
-	klog.V(0).Infof("---|| Proxier ->NewCustomProxier func() ||----Check argument: exec", exec)
-	klog.V(0).Infof("---|| Proxier ->NewCustomProxier func() ||----Check argument: proxyPorts", proxyPorts)
-	klog.V(0).Infof("---|| Proxier ->NewCustomProxier func() ||----Check argument: makeProxySocket", makeProxySocket)
 	return createProxier(loadBalancer, listenIP, iptables, exec, hostIP, proxyPorts, syncPeriod, minSyncPeriod, udpIdleTimeout, makeProxySocket)
 }
 
@@ -253,11 +248,6 @@ func createProxier(loadBalancer LoadBalancer, listenIP net.IP, iptables iptables
 		exec:            exec,
 		stopChan:        make(chan struct{}),
 	}
-	klog.V(0).Infof("---|| Proxier ->createProxier func() ||----Check argument: hostIP", hostIP)
-	klog.V(0).Infof("---|| Proxier ->createProxier func() ||----Check argument: iptables", iptables)
-	klog.V(0).Infof("---|| Proxier ->createProxier func() ||----Check argument: exec", exec)
-	klog.V(0).Infof("---|| Proxier ->createProxier func() ||----Check argument: proxyPorts", proxyPorts)
-	klog.V(0).Infof("---|| Proxier ->createProxier func() ||----Check argument: makeProxySocket", makeProxySocket)
 	klog.V(3).Infof("minSyncPeriod: %v, syncPeriod: %v, burstSyncs: %d", minSyncPeriod, syncPeriod, numBurstSyncs)
 	proxier.syncRunner = async.NewBoundedFrequencyRunner("userspace-proxy-sync-runner", proxier.syncProxyRules, minSyncPeriod, syncPeriod, numBurstSyncs)
 	return proxier, nil
@@ -478,7 +468,8 @@ func (proxier *Proxier) addServiceOnPortInternal(service proxy.ServicePortName, 
 	go func(service proxy.ServicePortName, proxier *Proxier) {
 		defer runtime.HandleCrash()
 		atomic.AddInt32(&proxier.numProxyLoops, 1)
-		sock.ProxyLoop(service, si, proxier.loadBalancer)
+		//sock.ProxyLoop(service, si, proxier.loadBalancer)
+		sock.ProxyLoop_V2(service, si, proxier.loadBalancer)
 		atomic.AddInt32(&proxier.numProxyLoops, -1)
 	}(service, proxier)
 
