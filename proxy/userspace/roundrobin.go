@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//clientset "k8s.io/client-go/deprecated"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -69,31 +68,11 @@ type LoadBalancerRR struct {
 // Ensure this implements LoadBalancer.
 var _ LoadBalancer = &LoadBalancerRR{}
 
-//type map_key struct {
-//	super_key string
-//	super_index int
-//}
-////type supertypes struct {
-////	supersupertype []string
-////}
-//type balancerState struct {
-//	endpoints []string // a list of "ip:port" style strings
-//	index     int      // current index into endpoints
-//	affinity  affinityPolicy
-//	/*My-proxy-LOCALY*/
-//	localendpoints []string // a list of local endpoints
-//	localindex     int      // current index into localendpoints
-//	superEndpoints map[map_key][]string
-//}
-
-
 type nodeEndpoints struct {
 	endpoints []string
 	index int
 }
-//type supertypes struct {
-//	supersupertype []string
-//}
+
 type balancerState struct {
 	endpoints []string // a list of "ip:port" style strings
 	index     int      // current index into endpoints
@@ -136,7 +115,6 @@ func (lb *LoadBalancerRR) newServiceInternal(svcPort proxy.ServicePortName, affi
 
 	if _, exists := lb.services[svcPort]; !exists {
 		lb.services[svcPort] = &balancerState{affinity: *newAffinityPolicy(affinityType, ttlSeconds), otherEndpoints: map[string]*nodeEndpoints{}}
-		//lb.services[svcPort].otherEndpoints := map[string]*nodeEndpoints{}
 		klog.V(4).Infof("LoadBalancerRR service %q did not exist, created", svcPort)
 	} else if affinityType != "" {
 		lb.services[svcPort].affinity.affinityType = affinityType
@@ -172,8 +150,6 @@ func (lb *LoadBalancerRR) ServiceHasEndpoints(svcPort proxy.ServicePortName) boo
 
 // NextEndpoint returns a service endpoint.
 //// The service endpoint is chosen using the round-robin algorithm.
-/**********************************************************************************/
-/////**********************************************************************************/
 //func (lb *LoadBalancerRR) NextEndpoint(svcPort proxy.ServicePortName, srcAddr net.Addr, sessionAffinityReset bool) (string, error) {
 //	// Coarse locking is simple.  We can get more fine-grained if/when we
 //	// can prove it matters.
@@ -237,10 +213,6 @@ func (lb *LoadBalancerRR) ServiceHasEndpoints(svcPort proxy.ServicePortName) boo
 //
 //	return endpoint, nil
 //}
-/**********************************************************************************/
-/**********************************************************************************/
-/**********************************************************************************/
-
 
 func (lb *LoadBalancerRR) NextEndpoint_V2(svcPort proxy.ServicePortName, srcAddr net.Addr, sessionAffinityReset bool) (string, error) {
 	// Coarse locking is simple.  We can get more fine-grained if/when we
@@ -315,20 +287,13 @@ func (lb *LoadBalancerRR) NextEndpoint_V2(svcPort proxy.ServicePortName, srcAddr
 				endpoint := sessionAffinity.endpoint
 				sessionAffinity.lastUsed = time.Now()
 				klog.V(0).Infof("NextEndpoint for service %q from IP %s with sessionAffinity %#v: %s", svcPort, ipaddr, sessionAffinity, endpoint)
-				/**/klog.V(0).Infof("CHECK <<< svcPort - sessionAffinityEnabled >>> --> ", svcPort)
-				/**/klog.V(0).Infof("CHECK <<< ipaddr - sessionAffinityEnabled >>> --> ", ipaddr)
-				/**/klog.V(0).Infof("CHECK <<< sessionAffinity - sessionAffinityEnabled >>> --> ", sessionAffinity)
-				/**/klog.V(0).Infof("CHECK <<< endpoints - sessionAffinityEnabled >>> --> ", endpoint)
 				return endpoint, nil
 			}
 		}
 	}
-	// Take the next endpoint.
-	/**/klog.V(0).Infof("<<< BREAK POINT 01 >>>")
 
 	//endpoint := state.endpoints[state.index]
 	//state.index = (state.index + 1) % len(state.endpoints)
-
 	/**LOCALY CODE**/
 	var endpoint string
 	if len(state.localendpoints) == 0 {
@@ -394,9 +359,6 @@ func (lb *LoadBalancerRR) OnEndpointsAdd(endpoints *v1.Endpoints) {
 	/*LOCALT*/
 	portsToNodeNames := util.BuildPortsToNodeNamesMap(endpoints)
 	hostname, err := nodeutil.GetHostname("")
-	klog.V(0).Infof("Roudrobin: nodename %s", hostname)
-	klog.V(0).Infof("Roudrobin: portsToEndpoints %s", portsToEndpoints)
-	klog.V(0).Infof("Roudrobin: portsToNodeNames %s", portsToNodeNames)
 	if err != nil {
 		klog.V(1).Infof("Roudrobin: Couldn't determine hostname")
 	}
@@ -413,11 +375,7 @@ func (lb *LoadBalancerRR) OnEndpointsAdd(endpoints *v1.Endpoints) {
 		/*LOCALT*/
 		nodenames := portsToNodeNames[portname]
 		/*END*/
-		klog.V(0).Infof("Roudrobin: SERVICE", lb.services)
-		klog.V(0).Infof("Roudrobin: SERVICE", lb.services[svcPort])
 		state, exists := lb.services[svcPort]
-		klog.V(0).Infof("Roudrobin: state", state)
-		klog.V(0).Infof("Roudrobin: SERVICE", lb.services[svcPort])
 		if !exists || state == nil || len(newEndpoints) > 0 {
 
 			klog.V(0).Infof("Roudrobin: Setting endpoints for %s to %+v", svcPort, newEndpoints)
@@ -425,45 +383,42 @@ func (lb *LoadBalancerRR) OnEndpointsAdd(endpoints *v1.Endpoints) {
 			// To be safe we will call it here.  A new service will only be created
 			// if one does not already exist.
 			state = lb.newServiceInternal(svcPort, v1.ServiceAffinity(""), 0)
-			//state.otherEndpoints := map[string]*nodeEndpoints{}
-			//state.otherEndpoints[hostname].endpoints = nil
 			//state.endpoints = util.ShuffleStrings(newEndpoints) //origina
 
 			/*LOCALT*/
 			state.localendpoints = nil
-			//state.otherEndpoints = nil
-			//state.endpoints = nil
-			for i := range newEndpoints { ////////////////////EDIT DK nay
+			for j := range newEndpoints{
+				ep, ok := state.otherEndpoints[nodenames[j]]
+				klog.V(0).Infof("<<< UPDATE - CLEAN state.otherEndpoints: >>> -->", ep)
+				if ok {
+					state.otherEndpoints[nodenames[j]].endpoints = nil//[]string{}
+					klog.V(0).Infof("<<< UPDATE - CLEAN iii: >>> -->", j)
+				}
+			}
+			for i := range newEndpoints {
 
 				if nodenames[i] == hostname {
-					klog.V(0).Infof(" \n APPEND TOP - state.localendpoints >>> -->", state.localendpoints)
 					state.localendpoints = append(state.localendpoints, newEndpoints[i])
-					klog.V(0).Infof(" \n APPEND DOWN - state.localendpoints >>> -->", state.localendpoints)
 				} else{
-					//state.endpoints = append(state.endpoints, newEndpoints[i])
-					//for v := range nodenames[i]{
-						//state.superEndpoints[map_key{super_key: nodenames[i], super_index: state.index}] = append(state.superEndpoints[map_key{super_key: nodenames[i], super_index: state.index}] , newEndpoints[i])
-					//}
 					ep, ok := state.otherEndpoints[nodenames[i]]
 					klog.V(0).Infof("OnEndpointsAdd: <<< ADD - state.otherEndpoints[nodenames[i]].endpoints >>> -->", ep)
 					if ok {
 						state.otherEndpoints[nodenames[i]].endpoints = append(state.otherEndpoints[nodenames[i]].endpoints, newEndpoints[i])
-						klog.V(0).Infof(" <<< ADD - state.otherEndpoints %+v OF NODENAMES %+v  >>> -->", state.otherEndpoints, nodenames[i])
+						//
 					} else {
 						state.otherEndpoints[nodenames[i]] = &nodeEndpoints{endpoints: []string{newEndpoints[i]}, index: 0}
 					}
 						//state.otherEndpoints[nodenames[i]].index = 0
+					klog.V(0).Infof("<<< ADD - COUTER - INSIDE i: >>> -->", i)
+					klog.V(0).Infof(" <<< ADD - LEN of state.otherEndpoints>>> -->", len(state.otherEndpoints))
+					klog.V(0).Infof(" <<< ADD - state.otherEndpoints %+v OF NODENAMES %+v  >>> -->", state.otherEndpoints[nodenames[i]], nodenames[i])
 				}
 				//seltf check
-				klog.V(0).Infof("OnEndpointsAdd: <<< iiiiiiiiiii >>> -->", i)
-				klog.V(0).Infof("OnEndpointsAdd: <<< ADD - state.otherEndpoints[nodenames[i]].endpoints >>> -->", state.otherEndpoints)
+				klog.V(0).Infof("<<< ADD - COUTER i: >>> -->", i)
 				klog.V(0).Infof("\n")
 			}
-			klog.V(0).Infof("LOCAL OnEndpointsAdd: service %s local endpoint %+v and other endpoint %+v", portname,state.localendpoints,state.endpoints)
+			klog.V(0).Infof("LOCAL OnEndpointsAdd: service %s local endpoint %+v and other endpoint %+v", portname,state.localendpoints,state.otherEndpoints)
 
-
-			/*END*/
-			// Reset the round-robin index.
 			state.index = 0
 			/*LOCALT*/
 			state.localindex = 0
@@ -512,36 +467,37 @@ func (lb *LoadBalancerRR) OnEndpointsUpdate(oldEndpoints, endpoints *v1.Endpoint
 
 			/**LOCALY**/
 			state.localendpoints = nil
-			//state.otherEndpoints = nil
-			//state.endpoints = nil
+			for j := range newEndpoints{
+				ep, ok := state.otherEndpoints[nodenames[j]]
+				klog.V(0).Infof("<<< UPDATE - CLEAN state.otherEndpoints: >>> -->", ep)
+				if ok {
+					state.otherEndpoints[nodenames[j]].endpoints = nil// []string{}
+					klog.V(0).Infof("<<< UPDATE - CLEAN iii: >>> -->", j)
+				}
+			}
 			for i := range newEndpoints {
 				if nodenames[i] == hostname {
-					klog.V(0).Infof(" \n APPEND TOP - state.localendpoints >>> -->", state.localendpoints)
 					state.localendpoints = append(state.localendpoints, newEndpoints[i])
-					klog.V(0).Infof(" \n APPEND DOWN - state.localendpoints >>> -->", state.localendpoints)
 				} else{
-					//state.endpoints = append(state.endpoints, newEndpoints[i])
-					//for v := range nodenames[i]{
-					//state.superEndpoints[map_key{super_key: nodenames[i], super_index: state.index}] = append(state.superEndpoints[map_key{super_key: nodenames[i], super_index: state.index}] , newEndpoints[i])
-					//}
 					ep, ok := state.otherEndpoints[nodenames[i]]
 					klog.V(0).Infof("OnEndpointsAdd: <<< UPDATE - state.otherEndpoints[nodenames[i]].endpoints >>> -->", ep)
 					if ok {
 						state.otherEndpoints[nodenames[i]].endpoints = append(state.otherEndpoints[nodenames[i]].endpoints, newEndpoints[i])
-						klog.V(0).Infof(" <<< UPDATE - state.otherEndpoints %+v OF NODENAMES %+v  >>> -->", state.otherEndpoints, nodenames[i])
+						//
 					} else {
 						state.otherEndpoints[nodenames[i]] = &nodeEndpoints{endpoints: []string{newEndpoints[i]}, index: 0}
 					}
-					//state.otherEndpoints[nodenames[i]].index = 0
+					klog.V(0).Infof("<<< UPDATE - COUTER - INSIDE i: >>> -->", i)
+					klog.V(0).Infof(" <<< UPDATE - LEN of state.otherEndpoints>>> -->", len(state.otherEndpoints[nodenames[i]].endpoints))
+					klog.V(0).Infof(" <<< UPDATE - state.otherEndpoints %+v OF NODENAMES %+v  >>> -->", state.otherEndpoints[nodenames[i]], nodenames[i])
 				}
 				//seltf check
-				klog.V(0).Infof(" <<< iiiiiiiiiii >>> -->", i)
+				klog.V(0).Infof(" <<< UPDATE - COUTER i >>> -->", i)
 				klog.V(0).Infof("\n")
 			}
-			klog.V(0).Infof("LoadBalancerRR: service %s LOCAL endpoint %+v and other endpoint %+v", portname,state.localendpoints,state.endpoints)
+			klog.V(0).Infof("LoadBalancerRR: service %s LOCAL endpoint %+v and other endpoint %+v", portname,state.localendpoints,state.otherEndpoints)
 			/*END*/
 
-			// Reset the round-robin index.
 			state.index = 0
 			state.localindex = 0
 		}
