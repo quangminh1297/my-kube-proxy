@@ -391,8 +391,7 @@ func (lb *LoadBalancerRR) OnEndpointsAdd(endpoints *v1.Endpoints) {
 				ep, ok := state.otherEndpoints[nodenames[j]]
 				klog.V(0).Infof("<<< UPDATE - CLEAN state.otherEndpoints: >>> -->", ep)
 				if ok {
-					state.otherEndpoints[nodenames[j]].endpoints = nil//[]string{}
-					klog.V(0).Infof("<<< UPDATE - CLEAN iii: >>> -->", j)
+					state.otherEndpoints[nodenames[j]].endpoints = nil
 				}
 			}
 			for i := range newEndpoints {
@@ -408,14 +407,9 @@ func (lb *LoadBalancerRR) OnEndpointsAdd(endpoints *v1.Endpoints) {
 					} else {
 						state.otherEndpoints[nodenames[i]] = &nodeEndpoints{endpoints: []string{newEndpoints[i]}, index: 0}
 					}
-						//state.otherEndpoints[nodenames[i]].index = 0
-					klog.V(0).Infof("<<< ADD - COUTER - INSIDE i: >>> -->", i)
 					klog.V(0).Infof(" <<< ADD - LEN of state.otherEndpoints>>> -->", len(state.otherEndpoints))
 					klog.V(0).Infof(" <<< ADD - state.otherEndpoints %+v OF NODENAMES %+v  >>> -->", state.otherEndpoints[nodenames[i]], nodenames[i])
 				}
-				//seltf check
-				klog.V(0).Infof("<<< ADD - COUTER i: >>> -->", i)
-				klog.V(0).Infof("\n")
 			}
 			klog.V(0).Infof("LOCAL OnEndpointsAdd: service %s local endpoint %+v and other endpoint %+v", portname,state.localendpoints,state.otherEndpoints)
 
