@@ -99,20 +99,11 @@ func TryConnectEndpoints_V2(service proxy.ServicePortName, srcAddr net.Addr, pro
 			klog.Errorf("Couldn't find an endpoint for %s: %v", service, err)
 			return nil, err
 		}
-
-		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< srcAddr >>> --> ", srcAddr)
 		klog.V(0).Infof("Mapped service %q to endpoint %s", service, endpoint)
 
 		// TODO: This could spin up a new goroutine to make the outbound connection,
 		// and keep accepting inbound traffic.
 		outConn, err := net.DialTimeout(protocol, endpoint, dialTimeout)
-
-
-		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< protocol >>> --> ", protocol)
-		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< endpoint >>> --> ", endpoint)
-		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< dialTimeout >>> --> ", dialTimeout)
-		/**/klog.V(0).Infof("CHECK Socket-TTCN <<< outConn%v, AND outConn%+v>>> --> ", outConn, outConn)
-
 		if err != nil {
 			if isTooManyFDsError(err) {
 				panic("Dial failed: " + err.Error())
@@ -135,8 +126,6 @@ func (tcp *tcpProxySocket) ProxyLoop_V2(service proxy.ServicePortName, myInfo *S
 		// Block until a connection is made.
 		inConn, err := tcp.Accept()
 
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn%v, AND inConn%+v >>> --> ", inConn, inConn)
-
 		if err != nil {
 			if isTooManyFDsError(err) {
 				panic("Accept failed: " + err.Error())
@@ -153,15 +142,7 @@ func (tcp *tcpProxySocket) ProxyLoop_V2(service proxy.ServicePortName, myInfo *S
 			continue
 		}
 		klog.V(0).Infof("Accepted TCP connection from %v to %v", inConn.RemoteAddr(), inConn.LocalAddr())
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.RemoteAddr() >>> --> ", inConn.RemoteAddr())
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.LocalAddr() >>> --> ", inConn.LocalAddr())
-
 		outConn, err := TryConnectEndpoints_V2(service, inConn.(*net.TCPConn).RemoteAddr(), "tcp", loadBalancer)
-
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< outConn%v, AND outConn%+v >>> --> ", outConn, outConn)
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< inConn.(*net.TCPConn).RemoteAddr()%v, AND inConn.(*net.TCPConn).RemoteAddr()%+v >>> --> ", inConn.(*net.TCPConn).RemoteAddr(), inConn.(*net.TCPConn).RemoteAddr())
-		/**/klog.V(0).Infof("CHECK Socket-Loop <<< loadBalancer%v, AND loadBalancer%+v >>> --> ", loadBalancer, loadBalancer)
-
 		if err != nil {
 			klog.Errorf("Failed to connect to balancer: %v", err)
 			inConn.Close()
