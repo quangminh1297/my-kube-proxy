@@ -468,8 +468,7 @@ func (proxier *Proxier) addServiceOnPortInternal(service proxy.ServicePortName, 
 	go func(service proxy.ServicePortName, proxier *Proxier) {
 		defer runtime.HandleCrash()
 		atomic.AddInt32(&proxier.numProxyLoops, 1)
-		//sock.ProxyLoop(service, si, proxier.loadBalancer)
-		sock.ProxyLoop_V2(service, si, proxier.loadBalancer)
+		sock.ProxyLoop(service, si, proxier.loadBalancer)
 		atomic.AddInt32(&proxier.numProxyLoops, -1)
 	}(service, proxier)
 
