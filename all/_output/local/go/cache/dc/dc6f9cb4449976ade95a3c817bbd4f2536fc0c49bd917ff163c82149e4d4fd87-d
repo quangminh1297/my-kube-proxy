@@ -1,8 +1,0 @@
-./args.go
-./bash_completions.go
-./cobra.go
-./command.go
-./command_notwin.go
-./powershell_completions.go
-./shell_completions.go
-./zsh_completions.go

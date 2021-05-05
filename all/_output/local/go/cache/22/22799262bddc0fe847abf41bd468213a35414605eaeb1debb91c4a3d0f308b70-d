@@ -1,6 +1,0 @@
-./doc.go
-./fake_mounter.go
-./mount.go
-./mount_helper_common.go
-./mount_helper_unix.go
-./mount_linux.go

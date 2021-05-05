@@ -1,4 +1,0 @@
-./doc.go
-./iptables.go
-./iptables_linux.go
-./save_restore.go

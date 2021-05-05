@@ -1,4 +1,0 @@
-./defaultfs.go
-./fakefs.go
-./filesystem.go
-./watcher.go

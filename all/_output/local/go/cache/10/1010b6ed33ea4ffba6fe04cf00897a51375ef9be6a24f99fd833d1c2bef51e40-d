@@ -1,6 +1,0 @@
-./context.go
-./error.go
-./extension-handler.go
-./helpers.go
-./main.go
-./reader.go

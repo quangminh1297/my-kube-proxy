@@ -1,5 +1,0 @@
-./api_linter.go
-./config.go
-./extension.go
-./openapi.go
-./union.go
