@@ -1,0 +1,3 @@
+# This dummy BUILD file prevents Bazel from trying to descend through the
+# infinite loop created by the symlink at
+# /home/master/go/src/k8s.io/kubernetes/_output/local/go/src/k8s.io/kubernetes

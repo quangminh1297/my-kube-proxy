@@ -1,0 +1,4 @@
+./doc.go
+./generated_expansion.go
+./podpreset.go
+./settings_client.go
