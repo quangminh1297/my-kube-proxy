@@ -262,9 +262,7 @@ func newServiceInfo(svcPortName proxy.ServicePortName, port *v1.ServicePort, ser
 		info.externalIPs = append(info.externalIPs, &externalIPInfo{ip: eip})
 	}
 	for _, ingress := range service.Status.LoadBalancer.Ingress {
-		if net.ParseIP(ingress.IP) != nil {
-			info.loadBalancerIngressIPs = append(info.loadBalancerIngressIPs, &loadBalancerIngressInfo{ip: ingress.IP})
-		}
+		info.loadBalancerIngressIPs = append(info.loadBalancerIngressIPs, &loadBalancerIngressInfo{ip: ingress.IP})
 	}
 
 	if apiservice.NeedsHealthCheck(service) {

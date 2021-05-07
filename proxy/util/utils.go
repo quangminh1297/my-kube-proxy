@@ -67,9 +67,6 @@ func BuildPortsToEndpointsMap(endpoints *v1.Endpoints) map[string][]string {
 				addr := &ss.Addresses[i]
 				if isValidEndpoint(addr.IP, int(port.Port)) {
 					portsToEndpoints[port.Name] = append(portsToEndpoints[port.Name], net.JoinHostPort(addr.IP, strconv.Itoa(int(port.Port))))
-					klog.V(0).Infof(" <<< EP - port.Name >>> ", port.Name)
-					klog.V(0).Infof(" <<< EP - port.Port >>> -->", port.Port)
-					klog.V(0).Infof(" <<< EP - portsToEndpoints[port.Name]>>> -->", portsToEndpoints[port.Name])
 				}
 			}
 		}
@@ -80,7 +77,6 @@ func BuildPortsToEndpointsMap(endpoints *v1.Endpoints) map[string][]string {
 // BuildPortsToNodeNamesMap builds a map of portname -> all node names for that
 // portname. Explode Endpoints.Subsets[*] into this structure.
 func BuildPortsToNodeNamesMap(endpoints *v1.Endpoints) map[string][]string {
-
 	portsToNodeNames := map[string][]string{}
 	for i := range endpoints.Subsets {
 		ss := &endpoints.Subsets[i]
@@ -90,18 +86,10 @@ func BuildPortsToNodeNamesMap(endpoints *v1.Endpoints) map[string][]string {
 				addr := &ss.Addresses[i]
 				if isValidEndpoint(addr.IP, int(port.Port)) {
 					NameOfNode := addr.NodeName
-					if NameOfNode == nil {
+					if NameOfNode== nil {
 						portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], "")
-						klog.V(0).Infof("<<<Port to NODE NAMES - IF >>> ", portsToNodeNames[port.Name])
-						klog.V(0).Infof(" <<< ADDRESS - port.Name >>> ", &port.Name)
-						klog.V(0).Infof(" <<< ADDRESS - port.Port >>> -->", &port.Port)
-						klog.V(0).Infof(" <<< ADDRESS - NameOfNode >>> -->", *NameOfNode)
 					} else {
 						portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], *NameOfNode)
-						klog.V(0).Infof(" <<<Port to NODE NAMES> - ELSE>> ", portsToNodeNames[port.Name])
-						klog.V(0).Infof(" <<< ADDRESS - port.Name >>> ", &port.Name)
-						klog.V(0).Infof(" <<< ADDRESS - port.Port >>> -->", &port.Port)
-						klog.V(0).Infof(" <<< ADDRESS - NameOfNode >>> -->", *NameOfNode)
 					}
 					//portsToNodeNames[port.Name] = append(portsToNodeNames[port.Name], *addr.NodeName)
 				}
